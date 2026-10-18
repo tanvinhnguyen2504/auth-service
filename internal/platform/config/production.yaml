@@ -1,0 +1,36 @@
+logger:
+  level: debug
+  pretty_print: false
+  file_name: logs/logrus.log
+  max_size_in_mb: 50
+  max_back_up: 3
+  max_age_in_day: 30
+
+server:
+  port: 5001
+  graceful_shutdown_in_second: 5
+  read_header_timeout_in_second: 10
+  read_timeout_in_second: 10
+  write_timeout_in_second: 100
+  idle_timeout_in_second: 120
+
+# Pool sizing and lifetimes only. Host, name, credentials and sslmode are
+# secrets or per-machine values, so they come from the environment instead.
+database:
+  max_conns: 20
+  min_conns: 4
+  max_conn_lifetime_in_minute: 60
+  max_conn_idle_time_in_minute: 30
+  connect_timeout_in_second: 5
+
+auth:
+  google_oauth_redirect_url: http://localhost:9999/api/auth/google/callback
+
+domains:
+  allowed_origins:
+    - http://localhost:*
+    - https://localhost:*
+    - https://*.vercel.app
+  frontend_origins:
+    - http://localhost:*
+    - http://localhost:5173
