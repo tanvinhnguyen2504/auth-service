@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nguyentanvinh/my-claude/backend/internal/platform/config"
+	"github.com/nguyentanvinh/auth-be/backend/internal/platform/config"
 )
 
 func Connect(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {

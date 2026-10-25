@@ -1,4 +1,4 @@
-module github.com/nguyentanvinh/my-claude/backend
+module github.com/nguyentanvinh/auth-be/backend
 
 go 1.26.0
 

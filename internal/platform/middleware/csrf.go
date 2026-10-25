@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/nguyentanvinh/my-claude/backend/internal/platform/config"
-	"github.com/nguyentanvinh/my-claude/backend/internal/platform/handler"
+	"github.com/nguyentanvinh/auth-be/backend/internal/platform/config"
+	"github.com/nguyentanvinh/auth-be/backend/internal/platform/handler"
 )
 
 // CSRFHeader is the header the SPA echoes the csrf cookie back in. It is also a

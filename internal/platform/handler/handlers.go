@@ -1,29 +1,20 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 
-	"github.com/go-playground/mold/v4"
-	"github.com/nguyentanvinh/my-claude/backend/internal/platform/config"
+	"github.com/nguyentanvinh/auth-be/backend/internal/platform/config"
 )
 
 type Handler struct {
-	Config      *config.Config
-	transformer *mold.Transformer
+	Config *config.Config
 }
 
-func New(config *config.Config) *Handler {
-	return &Handler{
-		Config: config,
-	}
-}
-
-func (h *Handler) ReturnWithJSON(w http.ResponseWriter, statusCode int, v interface{}) {
+func (h *Handler) ReturnWithJSON(w http.ResponseWriter, statusCode int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 
@@ -31,37 +22,16 @@ func (h *Handler) ReturnWithJSON(w http.ResponseWriter, statusCode int, v interf
 		return
 	}
 
-	if resp, ok := v.(config.SuccessResponse); ok {
-		if resp.Count == nil {
-			var defaultCount int64 = 1
-			resp.Count = &defaultCount
-		}
-
+	if resp, ok := v.(config.SuccessResponse); ok && resp.Count == nil {
+		one := int64(1)
+		resp.Count = &one
 		v = resp
 	}
 
-	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(v); err != nil {
-		// need logger in handler level
-		// h.Logger.WithError(err).Errorf("writing JSON to ResponseWriter failed on %T", v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		// The status is already on the wire, so logging is all that is left.
+		log.Printf("handler: encode %T: %v", v, err)
 	}
-	fmt.Println("By pass Return With JSON")
-}
-
-func (h *Handler) FromJSON(dest interface{}, r *http.Request) error {
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(dest); err != nil {
-		return err
-	}
-
-	if err := h.transformer.Struct(context.Background(), dest); err != nil {
-		return err
-	}
-
-	// TODO vincent: Later
-	// validate
-	// return h.validate.Struct(dest)
-	return nil
 }
 
 // maxBodyBytes caps a request body. These endpoints carry a handful of short
@@ -80,20 +50,6 @@ func (h *Handler) DecodeJSON(w http.ResponseWriter, r *http.Request, dest any) e
 	}
 	if err := decoder.Decode(new(struct{})); !errors.Is(err, io.EOF) {
 		return errors.New("body must contain a single JSON object")
-	}
-	return nil
-}
-
-func (h *Handler) ExtractUserIDFromContext(ctx context.Context) *int64 {
-	if userID, ok := ctx.Value(config.ContextKeyUserID).(int64); ok && userID > 0 {
-		return &userID
-	}
-	return nil
-}
-
-func (h *Handler) ExtractAppIDFromContext(ctx context.Context) *string {
-	if appID, ok := ctx.Value(config.ContextKeyAppID).(string); ok && appID != "" {
-		return &appID
 	}
 	return nil
 }

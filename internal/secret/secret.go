@@ -1,21 +1,14 @@
-// Package secret seals values that must leave the server but stay unreadable.
-//
-// The cipher is AES-256-GCM. AES-256 is the AES block cipher keyed with 32 bytes;
-// GCM is an AEAD mode, so a single pass both encrypts and authenticates: counter
-// mode turns the block cipher into a keystream for confidentiality, and GHASH
-// derives a 16-byte tag over the ciphertext and the AAD for integrity. Open
-// recomputes that tag, so an edited byte is refused rather than decrypted into
-// plausible garbage.
+// Package secret seals values that must leave the server but stay unreadable,
+// using AES-256-GCM. GCM is an AEAD mode: one pass encrypts and authenticates,
+// so Open refuses an edited byte rather than decrypting it into plausible
+// garbage.
 //
 // GCM's one hard rule is that a nonce is never reused with a given key: two
-// messages sharing one leak their XOR and let an attacker recover the hash key
-// and forge tags (Joux's "forbidden attack"). Seal therefore draws a fresh
-// 12-byte nonce per value and stores it in the clear beside the ciphertext,
-// where it is safe — a nonce must be unique, not secret.
+// messages sharing one leak their XOR and let an attacker forge tags (Joux's
+// "forbidden attack"). Seal therefore draws a fresh 12-byte nonce per value and
+// stores it in the clear — a nonce must be unique, not secret.
 //
-// Specifications: AES is FIPS 197; GCM, the nonce uniqueness requirement and the
-// 2^32-message ceiling for random 96-bit nonces are NIST SP 800-38D §8; the AEAD
-// interface shape is RFC 5116.
+// Specs: AES is FIPS 197; GCM and the nonce rule are NIST SP 800-38D §8.
 package secret
 
 import (

@@ -60,9 +60,6 @@ type Config struct {
 		EncryptionKey        string
 		EncryptionKeyVersion int
 	} `mapstructure:"auth"`
-	Anthropic struct {
-		Token string
-	}
 }
 
 func (c *Config) IsProduction() bool {
@@ -75,16 +72,22 @@ func (c *Config) ServerPort() string {
 }
 
 func (c *Config) ConnectDatabaseString() string {
+	// DATABASE_URL wins when set: it is the single-line form hosting providers
+	// hand you, and the documented way in. Without this the DB_* parts below
+	// silently win and a correct DATABASE_URL connects nowhere.
+	if c.Database.URL != "" {
+		return c.Database.URL
+	}
+
 	sslMode := c.Database.SSLMode
 	if sslMode == "" {
 		sslMode = "disable"
 	}
 
-	// TODO vincent: Will refactor again
+	// Built through url.URL so a password with @ or / is escaped for us.
 	dsn := url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(c.Database.User, c.Database.Password),
-		// TODO vincent: revisit later
+		Scheme:   "postgres",
+		User:     url.UserPassword(c.Database.User, c.Database.Password),
 		Host:     net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),
 		Path:     "/" + c.Database.Name,
 		RawQuery: url.Values{"sslmode": {sslMode}}.Encode(),
@@ -93,8 +96,8 @@ func (c *Config) ConnectDatabaseString() string {
 	return dsn.String()
 }
 
-// RedactedDatabaseTarget is safe to log: host, port and name only, no credentials.
-// TODO vincent: refactor later
+// RedactedDatabaseTarget is safe to log: host, port and database name only —
+// never the password, which logging the full DSN would expose.
 func (c *Config) RedactedDatabaseTarget() string {
 	if c.Database.URL == "" {
 		return fmt.Sprintf("%s/%s", net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)), c.Database.Name)

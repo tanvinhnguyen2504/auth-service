@@ -1,0 +1,168 @@
+basePath: /api/v1
+definitions:
+  auth.MeResponse:
+    properties:
+      user:
+        $ref: '#/definitions/auth.UserResponse'
+    type: object
+  auth.UserResponse:
+    properties:
+      avatarUrl:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  github_com_nguyentanvinh_auth-be_backend_internal_platform_config.SuccessResponse:
+    properties:
+      count:
+        type: integer
+      data: {}
+      metadata: {}
+      session_id:
+        type: string
+    type: object
+  github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorBody:
+    properties:
+      code:
+        $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorCode'
+      message:
+        type: string
+    type: object
+  github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorCode:
+    enum:
+    - VALIDATION_ERROR
+    - UNAUTHENTICATED
+    - FORBIDDEN
+    - RATE_LIMITED
+    - UPSTREAM_ERROR
+    - INTERNAL
+    type: string
+    x-enum-varnames:
+    - ECValidationError
+    - ECUnauthenticated
+    - ECForbidden
+    - ECRateLimited
+    - ECUpstreamError
+    - ECInternal
+  github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorBody'
+    type: object
+  platform_router.HealthResponse:
+    properties:
+      env:
+        type: string
+      ok:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Google sign-in, server-side sessions.
+  title: Auth Service
+  version: "1.0"
+paths:
+  /auth/google/callback:
+    get:
+      description: Verifies state and the ID token, upserts the user, issues the sid
+        + csrf cookies, then 302s to the frontend. Called by Google, never by the
+        SPA.
+      parameters:
+      - description: authorization code from Google
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: opaque state, must match the oauth_tx cookie
+        in: query
+        name: state
+        required: true
+        type: string
+      - description: set by Google when the user cancels
+        in: query
+        name: error
+        type: string
+      responses:
+        "302":
+          description: redirect to FRONTEND_URL/login?error=cancelled|login_failed|forbidden|server_error
+      summary: Google OAuth callback
+      tags:
+      - auth
+  /auth/google/login:
+    get:
+      description: Sets the sealed oauth_tx cookie and 302s to Google. Open this in
+        the browser, not from Swagger UI's "Try it out" — it is a navigation, not
+        an XHR.
+      responses:
+        "302":
+          description: redirect to FRONTEND_URL/login?error=server_error
+      summary: Start Google sign-in
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Deletes the session row and clears the sid + csrf cookies. Other
+        devices stay signed in.
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: signed out
+        "403":
+          description: FORBIDDEN — csrf header missing or mismatched
+          schema:
+            $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse'
+        "500":
+          description: INTERNAL
+          schema:
+            $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse'
+      security:
+      - CSRFToken: []
+      summary: Sign out
+      tags:
+      - auth
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/platform_router.HealthResponse'
+      summary: Liveness check
+      tags:
+      - health
+  /me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_config.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.MeResponse'
+              type: object
+        "401":
+          description: UNAUTHENTICATED
+          schema:
+            $ref: '#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse'
+      summary: Current user
+      tags:
+      - auth
+securityDefinitions:
+  CSRFToken:
+    description: Echo the value of the `csrf` cookie. Required on every state-changing
+      /api/v1 call.
+    in: header
+    name: X-CSRF-Token
+    type: apiKey
+swagger: "2.0"

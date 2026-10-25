@@ -43,7 +43,6 @@ func Load() (*Config, error) {
 		config.Server.Port = strings.TrimPrefix(port, ":")
 	}
 
-	config.Anthropic.Token = os.Getenv("ANTHROPIC_TOKEN")
 	config.Database.URL = os.Getenv("DATABASE_URL")
 	config.Database.Host = envOr("DB_HOST", "localhost")
 	config.Database.Port = envIntOr("DB_PORT", 5432)
