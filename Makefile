@@ -12,9 +12,6 @@ run:
 api:
 	set -a; . $(FILE_ENV); set +a; $(GO) run ./cmd/server
 
-# +-----------+
-# | sub tasks |
-# +-----------+
 .PHONY: swagger
 swagger:
 	$(SWAG) fmt
@@ -54,3 +51,31 @@ migrate-down:
 .PHONY: migrate-status
 migrate-status:
 	set -a; . $(FILE_ENV); set +a; $(GOOSE) -dir $(MIGRATE_DIR) postgres "$(GOOSE_DSN)" status
+
+# +-------------------+
+# | image / registry  |
+# +-------------------+
+# --platform linux/amd64 is required, not optional: this machine is arm64 and
+# the GKE nodes are e2-medium (amd64). A natively-built image would fail on the
+# node with "exec format error".
+DOCKER    := $(shell which docker)
+AR_HOST   := asia-southeast1-docker.pkg.dev
+AR_IMAGE  := $(AR_HOST)/vincent-mini-apps-project/mini-apps/auth-be
+TAG       ?= $(shell git rev-parse --short HEAD)
+
+.PHONY: ar-login
+ar-login:
+	gcloud auth configure-docker $(AR_HOST)
+
+# Tagged by commit SHA, never :latest — a mutable tag makes a rollout
+# non-deterministic and `kubectl rollout undo` meaningless.
+.PHONY: image-push
+image-push:
+	$(DOCKER) buildx build --platform linux/amd64 --target runtime \
+	  -t $(AR_IMAGE):$(TAG) --push .
+
+# Same build, kept local, to inspect before pushing.
+.PHONY: image
+image:
+	$(DOCKER) buildx build --platform linux/amd64 --target runtime \
+	  -t $(AR_IMAGE):$(TAG) --load .

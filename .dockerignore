@@ -2,8 +2,24 @@
 .env
 .env.*
 !.env.example
+
+# Build and tooling output
 bin/
 tmp/
+logs/
+coverage.out
 *_test.go
+
+# Local tooling and VCS metadata — none of it affects the binary, and .git in
+# particular can dominate the context size.
+.git/
+.gitignore
+.claude/
+.codegraph/
+.vscode/
+.air.toml
+.DS_Store
+
+# Docker's own files: changing them should not invalidate the source layers.
 Dockerfile
 .dockerignore

@@ -1,35 +1,30 @@
 # syntax=docker/dockerfile:1
 
 # ---- build ----------------------------------------------------------------
-FROM golang:1.25-alpine AS build
+FROM golang:1.26-alpine AS build
 
 WORKDIR /src
 
-# Manifests first: this layer is cached and only rebuilt when dependencies
-# change, so editing Go source does not re-download the module graph.
+# Manifests first, so editing source does not re-download the module graph.
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
 
-# CGO_ENABLED=0 produces a fully static binary, which is what lets the runtime
-# stage below be an empty image. -trimpath and -s -w drop build paths and the
-# symbol table for a smaller, reproducible binary.
+# CGO_ENABLED=0 is what makes the empty runtime image below possible. GOARCH is
+# inherited from --platform, so build with --platform linux/amd64 for GKE.
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build \
-      -trimpath -ldflags='-s -w' \
-      -o /out/server ./cmd/server
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags='-s -w' -o /server ./cmd/server
 
 # ---- runtime --------------------------------------------------------------
-# distroless static: no shell, no package manager, no libc. Runs as nonroot.
+# distroless static: no shell, no package manager, no libc. The :nonroot tag
+# already sets USER to the numeric 65532 — do not restate it as a name, or
+# Kubernetes runAsNonRoot can no longer verify the user is not root.
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
 
-# The binary talks to Anthropic over TLS, so it needs the CA bundle; distroless
-# ships one. Time zone data comes from the tzdata layer in the same image.
-COPY --from=build /out/server /server
+COPY --from=build /server /server
 
-USER nonroot:nonroot
-EXPOSE 4000
+EXPOSE 9999
 
 ENTRYPOINT ["/server"]
