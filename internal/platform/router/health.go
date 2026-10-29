@@ -9,10 +9,10 @@ import (
 )
 
 func (r *Router) registerHealthRoute(api *mux.Router) {
+	api.HandleFunc("/", r.healthCheck).Methods(http.MethodGet)
 	api.HandleFunc("/health", r.healthCheck).Methods(http.MethodGet)
 }
 
-// HealthResponse is the /api/v1/health body, per ../../../CLAUDE.md section 6.
 type HealthResponse struct {
 	OK  bool   `json:"ok"`
 	Env string `json:"env"`
