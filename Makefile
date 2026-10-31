@@ -41,7 +41,7 @@ coverage:
 # node with "exec format error".
 DOCKER    := $(shell which docker)
 AR_HOST   := asia-southeast1-docker.pkg.dev
-AR_IMAGE  := $(AR_HOST)/vincent-mini-apps-project/recommendations-repository/recommendations-service
+AR_IMAGE  := $(AR_HOST)/vincent-mini-apps-project/auth-repository/auth-service
 TAG       ?= $(shell git rev-parse --short HEAD)
 
 .PHONY: ar-login
