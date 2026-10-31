@@ -29,4 +29,3 @@ domains:
     - http://localhost:*
     - https://localhost:*
     - https://*.vercel.app
-

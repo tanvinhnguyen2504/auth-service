@@ -22,6 +22,7 @@ const PrefixAPIV1 = "/api/v1"
 func (r *Router) NewRouter(ctx context.Context) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.Use(middleware.SecurityHeaders)
+
 	if r.Config.IsProduction() {
 		router.Use(middleware.HSTS)
 	}
@@ -36,6 +37,7 @@ func (r *Router) NewRouter(ctx context.Context) (*mux.Router, error) {
 
 	api := router.PathPrefix(PrefixAPIV1).Subrouter()
 
+	api.Use(middleware.NewAppID(r.Config, PrefixAPIV1).Require)
 	api.Use(middleware.NewCSRF(r.Config, auth.CSRFCookieName(r.Config)).Require)
 
 	r.registerHealthRoute(api)

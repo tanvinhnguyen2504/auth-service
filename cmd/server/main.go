@@ -53,7 +53,7 @@ func main() {
 	// cookie, which the browser sends cross-origin only when both are set.
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{cfg.FrontendURL},
-		AllowedHeaders:   []string{"Accept", "Content-Type", "Origin", "X-CSRF-Token"},
+		AllowedHeaders:   config.AllowHeadersAPI,
 		AllowCredentials: true,
 		AllowedMethods: []string{
 			http.MethodGet,

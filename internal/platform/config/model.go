@@ -60,6 +60,13 @@ type Config struct {
 		EncryptionKey        string
 		EncryptionKeyVersion int
 	} `mapstructure:"auth"`
+
+	// Apps is the set of mini-apps this backend signs users in for. Every call
+	// names one in the app-id header, so an unknown id is rejected at the edge
+	// instead of reaching a handler.
+	Apps struct {
+		AllowedIDs []string
+	}
 }
 
 func (c *Config) IsProduction() bool {

@@ -6,3 +6,12 @@ type SuccessResponse struct {
 	Data      any    `json:"data"`
 	Metadata  any    `json:"metadata,omitempty"`
 }
+
+type ContextKey string
+
+const (
+	ContextKeyRequestID ContextKey = "request-id"
+	ContextAppID        ContextKey = "app-id"
+)
+
+var AllowHeadersAPI = []string{"Accept", "Content-Type", "Origin", "X-CSRF-Token", "app-id"}

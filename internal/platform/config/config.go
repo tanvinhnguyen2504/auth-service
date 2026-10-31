@@ -71,8 +71,11 @@ func Load() (*Config, error) {
 			config.Auth.SessionIdleTTL, config.Auth.SessionTTL)
 	}
 
-	// Fail fast rather than 302 to Google with an empty client id and get an
-	// opaque error back.
+	config.Apps.AllowedIDs = splitAndTrim(os.Getenv("ALLOWED_APP_IDS"))
+	if len(config.Apps.AllowedIDs) == 0 {
+		return nil, fmt.Errorf("config: ALLOWED_APP_IDS is required (comma separated app ids)")
+	}
+
 	for name, value := range map[string]string{
 		"GOOGLE_OAUTH_CLIENT_ID":     config.Auth.GoogleOAuthClientID,
 		"GOOGLE_OAUTH_CLIENT_SECRET": config.Auth.GoogleOAuthClientSecret,
@@ -115,4 +118,14 @@ func envIntOr(key string, fallback int) int {
 		return fallback
 	}
 	return v
+}
+
+func splitAndTrim(raw string) []string {
+	var out []string
+	for _, part := range strings.Split(raw, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
