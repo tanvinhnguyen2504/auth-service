@@ -14,8 +14,9 @@ func (r *Router) registerHealthRoute(api *mux.Router) {
 }
 
 type HealthResponse struct {
-	OK  bool   `json:"ok"`
-	Env string `json:"env"`
+	OK    bool   `json:"ok"`
+	Env   string `json:"env"`
+	Image string `json:"image"`
 }
 
 // healthCheck reports that the process is up. It deliberately does not touch
@@ -29,7 +30,7 @@ type HealthResponse struct {
 //	@Router   /health [get]
 func (r *Router) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(HealthResponse{OK: true, Env: r.Config.Env}); err != nil {
+	if err := json.NewEncoder(w).Encode(HealthResponse{OK: true, Env: r.Config.Env, Image: r.Config.Image}); err != nil {
 		log.Printf("router: encode health: %v", err)
 	}
 }

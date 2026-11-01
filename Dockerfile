@@ -1,5 +1,9 @@
 FROM golang:1.26-alpine AS build
 
+# Stamped into the binary below. Defaults to "dev" so a build that omits
+# --build-arg still succeeds and is labelled honestly rather than blank.
+ARG VERSION=dev
+
 WORKDIR /src
 
 COPY go.mod go.sum ./
@@ -11,7 +15,9 @@ COPY . .
 # inherited from --platform, so build with --platform linux/amd64 for GKE.
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags='-s -w' -o /server ./cmd/server
+    CGO_ENABLED=0 GOOS=linux go build -trimpath \
+      -ldflags="-s -w -X 'github.com/nguyentanvinh/auth-be/backend/internal/platform/config.buildImage=${VERSION}'" \
+      -o /server ./cmd/server
 
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
 

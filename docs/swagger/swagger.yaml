@@ -57,6 +57,8 @@ definitions:
     properties:
       env:
         type: string
+      image:
+        type: string
       ok:
         type: boolean
     type: object

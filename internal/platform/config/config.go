@@ -17,6 +17,11 @@ var configFS embed.FS
 
 const defaultEnv = "development"
 
+// buildImage is overwritten at link time by -ldflags -X (see Dockerfile). It
+// is the image tag this binary was built into, deliberately not read from the
+// environment: a running process must not be able to disagree with its image.
+var buildImage = "dev"
+
 // Load reads the embedded config for APP_ENV and overlays environment variables.
 func Load() (*Config, error) {
 	env := envOr("APP_ENV", defaultEnv)
@@ -56,6 +61,8 @@ func Load() (*Config, error) {
 
 	config.BaseURL = strings.TrimSuffix(envOr("BASE_URL", "http://localhost:9999"), "/")
 	config.FrontendURL = strings.TrimSuffix(envOr("FRONTEND_URL", "http://localhost:5173"), "/")
+
+	config.Image = envOr("ENV_IMAGE", buildImage)
 
 	config.Auth.EncryptionKey = os.Getenv("ENCRYPTION_KEY")
 	config.Auth.EncryptionKeyVersion = envIntOr("ENCRYPTION_KEY_VERSION", 1)

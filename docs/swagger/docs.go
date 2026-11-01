@@ -239,6 +239,9 @@ const docTemplate = `{
                 "env": {
                     "type": "string"
                 },
+                "image": {
+                    "type": "string"
+                },
                 "ok": {
                     "type": "boolean"
                 }
