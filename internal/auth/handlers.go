@@ -121,12 +121,12 @@ func (h *Handler) CallbackLogin(w http.ResponseWriter, r *http.Request) {
 //	@Tags        auth
 //	@Produce     json
 //	@Success     200 {object} config.SuccessResponse{data=auth.MeResponse}
-//	@Failure     401 {object} handler.ErrorResponse "UNAUTHENTICATED"
+//	@Failure     401 {object} handler.ErrorResponse "40101 SESSION_COOKIE_ABSENT | 40102 SESSION_INVALID | 40103 USER_NOT_IN_CONTEXT"
 //	@Router      /me [get]
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	user, ok := UserFrom(r.Context())
 	if !ok {
-		h.ReturnWithError(w, r, handler.Error(handler.ECUnauthenticated, errors.New("no user in context")))
+		h.ReturnWithError(w, r, handler.Error(handler.CodeNoUserInContext, errors.New("no user in context")))
 		return
 	}
 
@@ -141,13 +141,13 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 //	@Tags        auth
 //	@Produce     json
 //	@Success     204 "signed out"
-//	@Failure     403 {object} handler.ErrorResponse "FORBIDDEN — csrf header missing or mismatched"
-//	@Failure     500 {object} handler.ErrorResponse "INTERNAL"
+//	@Failure     403 {object} handler.ErrorResponse "40301 CSRF_COOKIE_ABSENT | 40302 CSRF_TOKEN_MISMATCH"
+//	@Failure     500 {object} handler.ErrorResponse "50001 INTERNAL"
 //	@Security    CSRFToken
 //	@Router      /auth/logout [post]
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.Logout(r.Context(), h.readCookie(r, sessionCookie)); err != nil {
-		h.ReturnWithError(w, r, handler.Error(handler.ECInternal, err))
+		h.ReturnWithError(w, r, handler.Error(handler.CodeInternal, err))
 		return
 	}
 

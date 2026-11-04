@@ -19,14 +19,14 @@ func (h *Handler) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionID := h.readCookie(r, sessionCookie)
 		if sessionID == "" {
-			h.ReturnWithError(w, r, handler.Error(handler.ECUnauthenticated, errors.New("no session cookie")))
+			h.ReturnWithError(w, r, handler.Error(handler.CodeNoSession, errors.New("no session cookie")))
 			return
 		}
 
 		user, err := h.service.SessionUser(r.Context(), sessionID)
 		if err != nil {
 			h.clearCookie(w, sessionCookie, "/")
-			h.ReturnWithError(w, r, handler.Error(handler.ECUnauthenticated, err))
+			h.ReturnWithError(w, r, handler.Error(handler.CodeSessionInvalid, err))
 			return
 		}
 

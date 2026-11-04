@@ -66,16 +66,13 @@ func (a *AppID) Require(next http.Handler) http.Handler {
 		}
 
 		if appID == "" {
-			a.ReturnWithError(w, r, handler.ErrorWithMessage(
-				handler.ECValidationError,
-				"Missing app-id.",
-				errors.New("app-id: absent from both header and query"),
-			))
+			a.ReturnWithError(w, r, handler.Error(handler.CodeMissingAppID,
+				errors.New("app-id: absent from both header and query")))
 			return
 		}
 
 		if _, ok := a.allowed[appID]; !ok {
-			a.ReturnWithError(w, r, handler.Error(handler.ECForbidden,
+			a.ReturnWithError(w, r, handler.Error(handler.CodeAppNotAllowed,
 				fmt.Errorf("app-id: %q is not an allowed app", appID)))
 			return
 		}

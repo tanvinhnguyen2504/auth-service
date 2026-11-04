@@ -85,13 +85,13 @@ const docTemplate = `{
                         "description": "signed out"
                     },
                     "403": {
-                        "description": "FORBIDDEN — csrf header missing or mismatched",
+                        "description": "40301 CSRF_COOKIE_ABSENT | 40302 CSRF_TOKEN_MISMATCH",
                         "schema": {
                             "$ref": "#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "INTERNAL",
+                        "description": "50001 INTERNAL",
                         "schema": {
                             "$ref": "#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse"
                         }
@@ -147,7 +147,7 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "UNAUTHENTICATED",
+                        "description": "40101 SESSION_COOKIE_ABSENT | 40102 SESSION_INVALID | 40103 USER_NOT_IN_CONTEXT",
                         "schema": {
                             "$ref": "#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse"
                         }
@@ -199,30 +199,46 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorCode"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorCode"
+                        }
+                    ],
+                    "example": "40302"
                 },
                 "message": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "That request could not be completed. Reload the page and try again."
                 }
             }
         },
         "github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorCode": {
             "type": "string",
             "enum": [
-                "VALIDATION_ERROR",
-                "UNAUTHENTICATED",
-                "FORBIDDEN",
-                "RATE_LIMITED",
-                "UPSTREAM_ERROR",
-                "INTERNAL"
+                "40001",
+                "40002",
+                "40101",
+                "40102",
+                "40103",
+                "40301",
+                "40302",
+                "40303",
+                "42901",
+                "50001",
+                "50201"
             ],
             "x-enum-varnames": [
-                "ECValidationError",
-                "ECUnauthenticated",
-                "ECForbidden",
-                "ECRateLimited",
-                "ECUpstreamError",
-                "ECInternal"
+                "CodeValidationFailed",
+                "CodeMissingAppID",
+                "CodeNoSession",
+                "CodeSessionInvalid",
+                "CodeNoUserInContext",
+                "CodeCSRFCookieMissing",
+                "CodeCSRFTokenMismatch",
+                "CodeAppNotAllowed",
+                "CodeRateLimited",
+                "CodeInternal",
+                "CodeUpstream"
             ]
         },
         "github_com_nguyentanvinh_auth-be_backend_internal_platform_handler.ErrorResponse": {

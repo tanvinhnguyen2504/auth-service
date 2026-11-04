@@ -47,14 +47,14 @@ func (c *CSRF) Require(next http.Handler) http.Handler {
 
 		cookie, err := r.Cookie(c.cookieName)
 		if err != nil || cookie.Value == "" {
-			c.ReturnWithError(w, r, handler.Error(handler.ECForbidden, errors.New("csrf: no csrf cookie")))
+			c.ReturnWithError(w, r, handler.Error(handler.CodeCSRFCookieMissing, errors.New("csrf: no csrf cookie")))
 			return
 		}
 
 		// Constant time: the value is one an attacker is guessing at, so the
 		// comparison must not leak how long a shared prefix was.
 		if subtle.ConstantTimeCompare([]byte(r.Header.Get(CSRFHeader)), []byte(cookie.Value)) != 1 {
-			c.ReturnWithError(w, r, handler.Error(handler.ECForbidden, errors.New("csrf: token does not match cookie")))
+			c.ReturnWithError(w, r, handler.Error(handler.CodeCSRFTokenMismatch, errors.New("csrf: token does not match cookie")))
 			return
 		}
 
