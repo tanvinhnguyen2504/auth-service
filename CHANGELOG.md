@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.2](https://github.com/tanvinhnguyen2504/auth-service/releases/tag/0.1.2) - 2026-11-04
+## [0.1.3](https://github.com/tanvinhnguyen2504/auth-service/releases/tag/0.1.3) - 2026-11-04
 
 - feat(auth): update error code handling
 
