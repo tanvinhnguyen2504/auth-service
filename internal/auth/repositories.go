@@ -52,13 +52,29 @@ ON CONFLICT (google_sub) DO UPDATE SET
     last_login_at  = now()
 RETURNING ` + userColumns + `, (xmax = 0) AS is_new_user`
 
+	args := []any{
+		p.Subject,       // $1 google_sub
+		p.Email,         // $2 email
+		p.EmailVerified, // $3 email_verified
+		p.Name,          // $4 name
+		p.AvatarURL,     // $5 avatar_url
+		p.HD,            // $6 hd
+	}
+
 	// Scanned explicitly: is_new_user has no field on User, so RowToStructByName
 	// would reject the extra column. Keep this list in userColumns order.
 	var u User
 	var isNewUser bool
-	err := r.pgPool.QueryRow(ctx, query,
-		p.Subject, p.Email, p.EmailVerified, p.Name, p.AvatarURL, p.HD,
-	).Scan(&u.ID, &u.Email, &u.EmailVerified, &u.Name, &u.AvatarURL, &u.CreatedAt, &u.LastLoginAt, &isNewUser)
+	err := r.pgPool.QueryRow(ctx, query, args...).Scan(
+		&u.ID,            // id
+		&u.Email,         // email
+		&u.EmailVerified, // email_verified
+		&u.Name,          // name
+		&u.AvatarURL,     // avatar_url
+		&u.CreatedAt,     // created_at
+		&u.LastLoginAt,   // last_login_at
+		&isNewUser,       // (xmax = 0)
+	)
 	if err != nil {
 		return nil, false, fmt.Errorf("auth: upsert google user: %w", err)
 	}
@@ -68,8 +84,11 @@ RETURNING ` + userColumns + `, (xmax = 0) AS is_new_user`
 
 func (r *repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 	const query = `SELECT ` + userColumns + ` FROM users WHERE id = $1`
+	args := []any{
+		id,
+	}
 
-	user, err := queryOne[User](ctx, r.pgPool, query, id)
+	user, err := queryOne[User](ctx, r.pgPool, query, args...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNoUser
 	}
@@ -81,8 +100,12 @@ func (r *repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 
 func (r *repository) CreateSession(ctx context.Context, s Session) error {
 	const query = `INSERT INTO sessions (id, user_id) VALUES ($1, $2)`
+	args := []any{
+		s.ID,     // $1 id
+		s.UserID, // $2 user_id
+	}
 
-	if _, err := r.pgPool.Exec(ctx, query, s.ID, s.UserID); err != nil {
+	if _, err := r.pgPool.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("auth: create session: %w", err)
 	}
 	return nil
@@ -93,8 +116,13 @@ func (r *repository) GetSession(ctx context.Context, id string, absoluteCutoff, 
 SELECT id, user_id, created_at, last_seen_at
 FROM sessions
 WHERE id = $1 AND created_at > $2 AND last_seen_at > $3`
+	args := []any{
+		id,             // $1 id
+		absoluteCutoff, // $2 created_at
+		idleCutoff,     // $3 last_seen_at
+	}
 
-	session, err := queryOne[Session](ctx, r.pgPool, query, id, absoluteCutoff, idleCutoff)
+	session, err := queryOne[Session](ctx, r.pgPool, query, args...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNoSession
 	}
@@ -106,8 +134,11 @@ WHERE id = $1 AND created_at > $2 AND last_seen_at > $3`
 
 func (r *repository) UpdateSessionLastSeenAt(ctx context.Context, id string) error {
 	const query = `UPDATE sessions SET last_seen_at = now() WHERE id = $1`
+	args := []any{
+		id,
+	}
 
-	if _, err := r.pgPool.Exec(ctx, query, id); err != nil {
+	if _, err := r.pgPool.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("auth: update session last_seen_at: %w", err)
 	}
 	return nil
@@ -115,8 +146,11 @@ func (r *repository) UpdateSessionLastSeenAt(ctx context.Context, id string) err
 
 func (r *repository) DeleteSession(ctx context.Context, id string) error {
 	const query = `DELETE FROM sessions WHERE id = $1`
+	args := []any{
+		id,
+	}
 
-	if _, err := r.pgPool.Exec(ctx, query, id); err != nil {
+	if _, err := r.pgPool.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("auth: delete session: %w", err)
 	}
 	return nil
@@ -124,8 +158,11 @@ func (r *repository) DeleteSession(ctx context.Context, id string) error {
 
 func (r *repository) DeleteUserSessions(ctx context.Context, userID int64) error {
 	const query = `DELETE FROM sessions WHERE user_id = $1`
+	args := []any{
+		userID,
+	}
 
-	if _, err := r.pgPool.Exec(ctx, query, userID); err != nil {
+	if _, err := r.pgPool.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("auth: delete user sessions: %w", err)
 	}
 	return nil
@@ -133,8 +170,12 @@ func (r *repository) DeleteUserSessions(ctx context.Context, userID int64) error
 
 func (r *repository) DeleteExpiredSessions(ctx context.Context, absoluteCutoff, idleCutoff time.Time) (int64, error) {
 	const query = `DELETE FROM sessions WHERE created_at <= $1 OR last_seen_at <= $2`
+	args := []any{
+		absoluteCutoff, // $1 created_at
+		idleCutoff,     // $2 last_seen_at
+	}
 
-	tag, err := r.pgPool.Exec(ctx, query, absoluteCutoff, idleCutoff)
+	tag, err := r.pgPool.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("auth: delete expired sessions: %w", err)
 	}
